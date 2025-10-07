@@ -8,7 +8,10 @@
 This repository contains the PyTorch implementation of the NeurIPS 2025 paper [LinearPatch: Plug-and-Play Patching for Layer-Pruned Large Language Models](https://arxiv.org/abs/2505.24680).
 
 
-![method](figures/LinearPatch.jpg)
+
+<p align="center">
+  <img src="LinearPatch.jpg" width="600">
+</p>
 
 ---
 
@@ -21,9 +24,6 @@ By leveraging **Hadamard transforms with channel-wise scaling**, LinearPatch eff
 - **Negligible inference overhead**  
 - **Training-free or lightweight fine-tuning modes**  
 
-<p align="center">
-  <img src="figures/method_placeholder.jpg" width="600">
-</p>
 
 ---
 
