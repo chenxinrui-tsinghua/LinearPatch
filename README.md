@@ -27,7 +27,6 @@ By leveraging **Hadamard transforms with channel-wise scaling**, LinearPatch eff
 - [Preparations](#preparations)  
 - [Usage](#usage)  
 - [Results](#results)  
-- [Acknowledgements](#acknowledgements)  
 - [References](#references)  
 
 ---
@@ -37,10 +36,9 @@ By leveraging **Hadamard transforms with channel-wise scaling**, LinearPatch eff
 ### Installation
 
 ```bash
-conda create -n flatquant python=3.10 -y
-conda activate flatquant
-pip install -r requirements.txt && pip install -e . 
-pip install flash-attn --no-build-isolation
+conda create -n linearpatch python=3.10 -y
+conda activate linearpatch
+pip install -r requirements.txt
 ```
 
 **Note:** - To run models like LLaMA2 and LLaMA3, please install dependencies from `requirements_llama2.txt`.
