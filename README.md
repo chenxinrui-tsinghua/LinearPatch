@@ -46,19 +46,17 @@ conda activate linearpatch
 pip install -r requirements.txt
 ```
 
-**Note:** - To run models like LLaMA2 and LLaMA3, please install dependencies from `requirements_llama2.txt`.
-
 ### Data Preparation
 
-Download datasets in `./datasets`.
+Download datasets.
 
 **Calibration set or PPL evaluation**
 
 | Dataset  | URL                                                                                                                        |
 | --------- | -------------------------------------------------------------------------------------------------------------------------- |
-| WikiText2 | [https://huggingface.co/datasets/wikitext](https://huggingface.co/datasets/wikitext)                                       |
+| WikiText2 | [https://huggingface.co/datasets/Salesforce/wikitext](https://huggingface.co/datasets/Salesforce/wikitext)                                       |
 | C4        | [https://huggingface.co/datasets/allenai/c4](https://huggingface.co/datasets/allenai/c4)                                   |
-| Pile      | [https://huggingface.co/datasets/mit-han-lab/pile-val-backup](https://huggingface.co/datasets/mit-han-lab/pile-val-backup) |
+| PTB      | [https://huggingface.co/datasets/ptb-text-only/ptb_text_only](https://huggingface.co/datasets/ptb-text-only/ptb_text_only) |
 
 **Commonsense QA evaluation**
 
@@ -66,14 +64,12 @@ For QA evaluation, we use lm eval (0.4.4) to load datasets. if you have download
 
 | Dataset         | Local Dir             | URL                                                                                                              |
 | --------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| ARC-E and ARC-C | ./datasets/ai2_arc    | [https://huggingface.co/datasets/allenai/ai2_arc](https://huggingface.co/datasets/allenai/ai2_arc)               |
+| ARC-e and ARC-c | ./datasets/ai2_arc    | [https://huggingface.co/datasets/allenai/ai2_arc](https://huggingface.co/datasets/allenai/ai2_arc)               |
 | HellaSwag       | ./datasets/hellaswag  | [https://huggingface.co/datasets/Rowan/hellaswag](https://huggingface.co/datasets/Rowan/hellaswag)               |
 | PIQA            | ./datasets/piqa       | [https://huggingface.co/datasets/ybisk/piqa](https://huggingface.co/datasets/ybisk/piqa)                         |
-| WinoGrande      | ./datasets/winogrande | [https://huggingface.co/datasets/winogrande](https://huggingface.co/datasets/winogrande)                         |
-| BoolQ           | ./datasets/boolq      | [https://huggingface.co/datasets/boolq](https://huggingface.co/datasets/boolq)                                   |
-| RACE            | ./datasets/race       | [https://huggingface.co/datasets/race](https://huggingface.co/datasets/race)                                     |
-| COPA            | ./datasets/copa       | [https://huggingface.co/datasets/super_glue/viewer/copa](https://huggingface.co/datasets/super_glue/viewer/copa) |
-| WSC             | ./datasets/wsc273     | [https://huggingface.co/datasets/wsc273](https://huggingface.co/datasets/wsc273)                                 |
+| WinoGrande      | ./datasets/winogrande | [https://huggingface.co/datasets/allenai/winogrande](https://huggingface.co/datasets/allenai/winogrande)                         |
+| BoolQ, CoPa and WSC           | ./datasets/boolq      | [https://huggingface.co/datasets/aps/super_glue](https://huggingface.co/datasets/aps/super_glue)                                   |
+| Race-h            | ./datasets/race       | [https://huggingface.co/datasets/ehovy/race](https://huggingface.co/datasets/ehovy/race)                                     |
 
 
 ### Model Preparation
@@ -128,7 +124,7 @@ CUDA_VISIBLE_DEVICES=0 python main_distill.py \
 
 ### PPL Results
 
-Table 1：LLaMA-2-7B - Comparison on PPL benchmark with training-free methods (7 out of 32 layers pruned)
+**Table 1：LLaMA-2-7B - Comparison on PPL benchmark with training-free methods (7 out of 32 layers pruned)**
 | Method                  | WIKI-2  | C4      | PTB     | PPL avg.  |
 |-------------------------|---------|---------|---------|-----------|
 | Dense                   | 5.47    | 6.97    | 22.51   | 11.65     |
@@ -143,7 +139,7 @@ Table 1：LLaMA-2-7B - Comparison on PPL benchmark with training-free methods (7
 
 
 
-Table 2：LLaMA-3-8B - Comparison on PPL benchmark with training-free methods (7 out of 32 layers pruned)
+**Table 2：LLaMA-3-8B - Comparison on PPL benchmark with training-free methods (7 out of 32 layers pruned)**
 | Method                  | WIKI-2    | C4        | PTB       | PPL avg.  |
 |-------------------------|-----------|-----------|-----------|-----------|
 | Dense                   | 6.14      | 8.88      | 10.59     | 8.54      |
@@ -161,7 +157,7 @@ Table 2：LLaMA-3-8B - Comparison on PPL benchmark with training-free methods (7
 
 (Note: $L_p$ denotes the number of pruned layers and $L_t$ denotes the total number of layers of the model. The Ratio column represents the proportion(%) of pruning parameters to the total parameters of the model. The Avg. column denotes the average accuracy(%) and the RP column denotes the retained performance(%).)
 
-Table 3：LLaMA-2-7B - Comparison on QA benchmark with training-free methods
+**Table 3：LLaMA-2-7B - Comparison on QA benchmark with training-free methods**
 
 
 | $L_p/L_t$ | Method                  | Ratio  | ARC-c  | ARC-e  | BoolQ  | HeSw   | PIQA   | WG     | WSC    | Race-h | CoPa   | Avg.       | RP         |
@@ -173,7 +169,7 @@ Table 3：LLaMA-2-7B - Comparison on QA benchmark with training-free methods
 | 7/32      | LLM-Streamline (None)   | 21.02  | 36.18  | 55.89  | 62.17  | 62.66  | 70.40  | 65.98  | 77.29  | 33.78  | 81.00  | 60.59      | 86.06      |
 | 7/32      | ShortGPT＋LinearPatch   | 20.78  | 37.63  | 61.24  | 62.14  | 63.49  | 70.46  | 65.90  | 79.49  | 36.46  | 85.00  | **62.42**  | **88.88**  |
 
-Tabel 4：LLaMA-3-8B - Comparison on QA benchmark with training-free methods
+**Tabel 4：LLaMA-3-8B - Comparison on QA benchmark with training-free methods**
 
 | $L_p/L_t$ | Method                  | Ratio  | ARC-c  | ARC-e  | BoolQ  | HeSw   | PIQA   | WG     | WSC    | Race-h | CoPa   | Avg.       | RP         |
 |-----------|-------------------------|--------|--------|--------|--------|--------|--------|--------|--------|--------|--------|------------|------------|
