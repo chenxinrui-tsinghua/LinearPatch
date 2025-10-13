@@ -5,7 +5,7 @@
 
 [![arXiv](https://img.shields.io/badge/LinearPatch-2505.24680-b31b1b.svg?logo=arXiv)](https://arxiv.org/abs/2505.24680)
 
-This repository contains the PyTorch implementation of the NeurIPS 2025 paper [LinearPatch: Plug-and-Play Patching for Layer-Pruned Large Language Models](https://arxiv.org/abs/2505.24680).
+This repository contains the PyTorch implementation of the NeurIPS 2025 paper [A Simple Linear Patch Revives Layer-Pruned Large Language Models](https://arxiv.org/abs/2505.24680).
 
 
 
