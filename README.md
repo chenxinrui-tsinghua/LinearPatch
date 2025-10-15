@@ -68,7 +68,7 @@ For QA evaluation, we use lm eval (0.4.4) to load datasets. if you have download
 | HellaSwag       | ./datasets/hellaswag  | [https://huggingface.co/datasets/Rowan/hellaswag](https://huggingface.co/datasets/Rowan/hellaswag)               |
 | PIQA            | ./datasets/piqa       | [https://huggingface.co/datasets/ybisk/piqa](https://huggingface.co/datasets/ybisk/piqa)                         |
 | WinoGrande      | ./datasets/winogrande | [https://huggingface.co/datasets/allenai/winogrande](https://huggingface.co/datasets/allenai/winogrande)                         |
-| BoolQ, CoPa and WSC           | ./datasets/boolq      | [https://huggingface.co/datasets/aps/super_glue](https://huggingface.co/datasets/aps/super_glue)                                   |
+| BoolQ, CoPa and WSC           | ./datasets/super_glue      | [https://huggingface.co/datasets/aps/super_glue](https://huggingface.co/datasets/aps/super_glue)                                   |
 | Race-h            | ./datasets/race       | [https://huggingface.co/datasets/ehovy/race](https://huggingface.co/datasets/ehovy/race)                                     |
 
 
