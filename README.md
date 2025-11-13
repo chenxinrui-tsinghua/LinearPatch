@@ -1,6 +1,6 @@
 # LinearPatch: A Simple Linear Patch Revives Layer-Pruned Large Language Models
 
-[NeurIPS 2025] Official PyTorch implementation of "A Simple Linear Patch Revives Layer-Pruned Large Language Models"
+Official PyTorch implementation of "A Simple Linear Patch Revives Layer-Pruned Large Language Models"
 
 
 [![arXiv](https://img.shields.io/badge/LinearPatch-2505.24680-b31b1b.svg?logo=arXiv)](https://arxiv.org/abs/2505.24680)
