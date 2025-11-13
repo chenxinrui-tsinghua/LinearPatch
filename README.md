@@ -1,162 +1,198 @@
-# Prune&Comp: Free Lunch for Layer-Pruned LLMs via Iterative Pruning with Magnitude Compensation
+# LinearPatch: A Simple Linear Patch Revives Layer-Pruned Large Language Models
 
-[AAAI 2026] Official PyTorch implementation of “Prune&Comp: Free Lunch for Layer-Pruned LLMs via Iterative Pruning with Magnitude Compensation”
+[NeurIPS 2025] Official PyTorch implementation of "A Simple Linear Patch Revives Layer-Pruned Large Language Models"
 
-[![arXiv](https://img.shields.io/badge/Prune%26Comp-2507.18212-b31b1b.svg?logo=arXiv)](https://arxiv.org/abs/2507.18212)
 
-This repository contains the PyTorch implementation of the AAAI 2026 paper [Prune&Comp: Free Lunch for Layer-Pruned LLMs via Iterative Pruning with Magnitude Compensation](https://arxiv.org/abs/2507.18212).
+[![arXiv](https://img.shields.io/badge/LinearPatch-2505.24680-b31b1b.svg?logo=arXiv)](https://arxiv.org/abs/2505.24680)
+
+This repository contains the PyTorch implementation of the NeurIPS 2025 paper [A Simple Linear Patch Revives Layer-Pruned Large Language Models](https://arxiv.org/abs/2505.24680).
+
+
 
 <p align="center">
-  <img src="PruneAndComp.png" width="600">
+  <img src="LinearPatch.png" width="600">
 </p>
 
 ---
 
-## 🧠 TL;DR
+## TL;DR
 
-**Prune&Comp** is a *training-free*, *plug-and-play* framework for **iterative layer pruning** of Large Language Models (LLMs).  
-It compensates for the **magnitude gap** caused by layer removal, resulting in **robust pruning stability** and **significant performance gains**—without retraining or inference overhead.
+LinearPatch is a **lightweight and plug-and-play technique** designed to patch **activation magnitude mismatches** in **layer-pruned LLMs**.  
+By leveraging **Hadamard transforms with channel-wise scaling**, LinearPatch efficiently aligns activations across layers, achieving:  
 
-- **Training-free & lightweight**  
-- **Stabilizes iterative pruning** through *magnitude compensation*  
-- **Boosts performance across PPL, MMLU, and QA tasks**  
-- **Compatible with any pruning metric** (e.g., CosSim, Taylor+, PPL, Mag+)  
+- **Better PPL, MMLU, and QA performance** than state-of-the-art pruning methods  
+- **Negligible inference overhead**  
+- **Training-free or lightweight fine-tuning modes**  
 
----
-
-## 📋 Contents
-
-- [Preparations](#preparations)
-- [Usage](#usage)
-- [Results](#results)
-- [References](#references)
 
 ---
 
-## ⚙️ Preparations
+## Contents
+
+- [Preparations](#preparations)  
+- [Usage](#usage)  
+- [Results](#results)  
+- [References](#references)  
+
+---
+
+## Preparations
 
 ### Installation
 
 ```bash
-conda create -n prunecomp python=3.10 -y
-conda activate prunecomp
+conda create -n linearpatch python=3.10 -y
+conda activate linearpatch
 pip install -r requirements.txt
-````
-
-### Model Preparation
-
-Download the official model weights from HuggingFace:
-
-| Model                        | Download Link                                                                                                                      |
-| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| LLaMA-2-7B                   | [https://huggingface.co/meta-llama/Llama-2-7B](https://huggingface.co/meta-llama/Llama-2-7B)                                       |
-| LLaMA-3-8B                   | [https://huggingface.co/meta-llama/Llama-3.1-8B](https://huggingface.co/meta-llama/Llama-3.1-8B)                                   |
-| Qwen3-8B                     | [https://huggingface.co/Qwen/Qwen2-8B](https://huggingface.co/Qwen/Qwen2-8B)                                                       |
-| DeepSeek-R1-Distill-Llama-8B | [https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Llama-8B](https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Llama-8B) |
+```
 
 ### Data Preparation
 
-Calibration & evaluation datasets can be downloaded from HuggingFace:
+Download datasets.
 
-| Dataset   | URL                                                                                                                        |
+**Calibration set or PPL evaluation**
+
+| Dataset  | URL                                                                                                                        |
 | --------- | -------------------------------------------------------------------------------------------------------------------------- |
-| WikiText2 | [https://huggingface.co/datasets/Salesforce/wikitext](https://huggingface.co/datasets/Salesforce/wikitext)                 |
+| WikiText2 | [https://huggingface.co/datasets/Salesforce/wikitext](https://huggingface.co/datasets/Salesforce/wikitext)                                       |
 | C4        | [https://huggingface.co/datasets/allenai/c4](https://huggingface.co/datasets/allenai/c4)                                   |
-| PTB       | [https://huggingface.co/datasets/ptb-text-only/ptb_text_only](https://huggingface.co/datasets/ptb-text-only/ptb_text_only) |
+| PTB      | [https://huggingface.co/datasets/ptb-text-only/ptb_text_only](https://huggingface.co/datasets/ptb-text-only/ptb_text_only) |
 
-QA benchmarks are loaded using `lm_eval` (v0.4.4):
+**Commonsense QA evaluation**
 
-| Dataset          | URL                                                                                                      |
-| ---------------- | -------------------------------------------------------------------------------------------------------- |
-| ARC-e / ARC-c    | [https://huggingface.co/datasets/allenai/ai2_arc](https://huggingface.co/datasets/allenai/ai2_arc)       |
-| HellaSwag        | [https://huggingface.co/datasets/Rowan/hellaswag](https://huggingface.co/datasets/Rowan/hellaswag)       |
-| PIQA             | [https://huggingface.co/datasets/ybisk/piqa](https://huggingface.co/datasets/ybisk/piqa)                 |
-| BoolQ, CoPA, WSC | [https://huggingface.co/datasets/aps/super_glue](https://huggingface.co/datasets/aps/super_glue)         |
-| WinoGrande       | [https://huggingface.co/datasets/allenai/winogrande](https://huggingface.co/datasets/allenai/winogrande) |
-| Race-h           | [https://huggingface.co/datasets/ehovy/race](https://huggingface.co/datasets/ehovy/race)                 |
+For QA evaluation, we use lm eval (0.4.4) to load datasets. if you have download the datasets, just modify the config item dataset_path in each QA dataset's config file in `~/anaconda3/envs/your-env-name/lib/python3.x/site-packages/lm_eval/tasks`.
 
----
+| Dataset         | Local Dir             | URL                                                                                                              |
+| --------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| ARC-e and ARC-c | ./datasets/ai2_arc    | [https://huggingface.co/datasets/allenai/ai2_arc](https://huggingface.co/datasets/allenai/ai2_arc)               |
+| HellaSwag       | ./datasets/hellaswag  | [https://huggingface.co/datasets/Rowan/hellaswag](https://huggingface.co/datasets/Rowan/hellaswag)               |
+| PIQA            | ./datasets/piqa       | [https://huggingface.co/datasets/ybisk/piqa](https://huggingface.co/datasets/ybisk/piqa)                         |
+| WinoGrande      | ./datasets/winogrande | [https://huggingface.co/datasets/allenai/winogrande](https://huggingface.co/datasets/allenai/winogrande)                         |
+| BoolQ, CoPa and WSC           | ./datasets/super_glue      | [https://huggingface.co/datasets/aps/super_glue](https://huggingface.co/datasets/aps/super_glue)                                   |
+| Race-h            | ./datasets/race       | [https://huggingface.co/datasets/ehovy/race](https://huggingface.co/datasets/ehovy/race)                                     |
 
-## 🚀 Usage
 
-We provide example scripts for running **Prune&Comp**.
-A typical example for **CosSim(BI)** metric on **LLaMA-3-8B**:
+### Model Preparation
+
+Download links to officially released LLMs
+
+| Model                          | Download Link                                                                 |
+|--------------------------------|-------------------------------------------------------------------------------|
+| LLaMA-2-7B                     | [https://huggingface.co/meta-llama/Llama-2-7B](https://huggingface.co/meta-llama/Llama-2-7B) |
+| LLaMA-2-13B                    | [https://huggingface.co/meta-llama/Llama-2-13B](https://huggingface.co/meta-llama/Llama-2-13B) |
+| LLaMA-3-8B                     | [https://huggingface.co/meta-llama/Llama-3.1-8B](https://huggingface.co/meta-llama/Llama-3.1-8B) |
+| DeepSeek-R1-Distill-Qwen-7B    | [https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-7B](https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-7B) |
+| DeepSeek-R1-Distill-Llama-8B   | [https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Llama-8B](https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Llama-8B) |
+| Baichuan2-7B                   | [https://huggingface.co/baichuan-inc/Baichuan2-7B-Base](https://huggingface.co/baichuan-inc/Baichuan2-7B-Base) |
+
+
+## Usage
+
+We provide example scripts for running LinearPatch.
+A typical usage on LLaMA-2-7B is as follows:
 
 ```bash
-bash run.sh
+bash scripts/run_llama2-7b.sh
 ```
 
-Inside `run.sh`:
+The example python scripts  is as follows:
+
+`scripts/run_llama2-7b.sh`:
 
 ```bash
-# CosSim(BI)
-CUDA_VISIBLE_DEVICES=0 python CosSim_BI.py \
---model /path_to_models/llama-3-8b \
---num_to_prune 5 \
---log_dir /path/results/llama-3-8b/BI-p5 \
+CUDA_VISIBLE_DEVICES=0 python main_distill.py \
+--model ./models/llama-2-7b \
+--calib_dataset wikitext2 \
+--net Llama-2 \
+--total_num_prune 7 \
+--training_seqlen 2048 \
+--val_size 16 \
+--batch_size 1 \
+--epochs 1 \
+--num_workers 8 \
+--weight_lr 1e-4 \
+--save_prune_dir ./exp_save_model/ \
+--cache_dir ./cache/ \
+--insert_type "rotate" \ # choice: ["rotate", "diag"], "diag" denotes only with diagonal matrix alignment, "rotate" denotes with Hadamard rotation, 
+--distill_type "train_free" \ # choice: ["train_free", "output_kl"]
 --eval_ppl \
---eval_mmlu \
---eval_tasks "wsc273,hellaswag,piqa,arc_easy,arc_challenge,boolq,winogrande,race,copa" \
---save_dir /path/save/llama-3-8b/BI-p5  # save_dir is optional
+--eval_tasks "wsc273,hellaswag,piqa,arc_easy,arc_challenge,boolq,winogrande,race,copa"
 ```
 
-You can replace `CosSim_BI.py` with your preferred metric implementation (e.g., `CosSim(CL)`, `Taylor.py`, `PPL.py`, `Mag+.py`).
 
----
+## Results
 
-## 📊 Results
+### PPL Results
 
-### Perplexity (PPL) Comparison
+**Table 1：LLaMA-2-7B - Comparison on PPL benchmark with training-free methods (7 out of 32 layers pruned)**
+| Method                  | WIKI-2  | C4      | PTB     | PPL avg.  |
+|-------------------------|---------|---------|---------|-----------|
+| Dense                   | 5.47    | 6.97    | 22.51   | 11.65     |
+| SLEB                    | 9.14    | 11.21   | 38.45   | 19.60     |
+| +LinearPatch            | 8.77    | 10.66   | 38.30   | **19.24** |
+| Taylor+                 | 18.45   | 20.99   | 62.18   | 33.87     |
+| +LinearPatch            | 13.84   | 15.28   | 48.26   | **25.79** |
+| ShotGPT                 | 18.45   | 20.99   | 62.18   | 33.87     |
+| +LinearPatch            | 13.22   | 14.58   | 45.97   | **24.59** |
+| LLM-Streamline(None)    | 18.45   | 20.99   | 62.18   | 33.87     |
+| +LinearPatch            | 13.22   | 14.58   | 45.97   | **24.59** |
 
-| Model             | Metric         | Baseline | + Prune&Comp | Δ      |
-| ----------------- | -------------- | -------- | ------------ | ------ |
-| LLaMA-3-8B (5/32) | **Taylor+**    | 512.78   | **16.34**    | ↓96.8% |
-| LLaMA-3-8B (5/32) | **CosSim(BI)** | 28.73    | **14.56**    | ↓49.3% |
-| LLaMA-2-7B (7/32) | **Mag+**       | 89.61    | **28.20**    | ↓68.5% |
 
----
 
-### QA Benchmark (LLaMA-3-8B)
+**Table 2：LLaMA-3-8B - Comparison on PPL benchmark with training-free methods (7 out of 32 layers pruned)**
+| Method                  | WIKI-2    | C4        | PTB       | PPL avg.  |
+|-------------------------|-----------|-----------|-----------|-----------|
+| Dense                   | 6.14      | 8.88      | 10.59     | 8.54      |
+| SLEB                    | 13.12     | 16.76     | 21.04     | 16.97     |
+| +LinearPatch            | 11.97     | 15.74     | 19.55     | **15.75** |
+| Taylor+                 | 2287.86   | 1491.38   | 4741.90   | 2840.38   |
+| +LinearPatch            | 208.88    | 235.63    | 264.97    | **236.49**|
+| ShotGPT                 | 57.76     | 50.13     | 67.39     | 58.43     |
+| +LinearPatch            | 25.67     | 28.38     | 31.22     | **28.42** |
+| LLM-Streamline(None)    | 2287.73   | 1491.37   | 4738.81   | 2839.30   |
+| +LinearPatch            | 69.82     | 96.68     | 88.79     | **85.10** |
 
-| Pruning Ratio | Method                      | Avg. Acc. | RP (%)     |
-| ------------- | --------------------------- | --------- | ---------- |
-| 5/32          | Taylor+                     | 65.85     | 100        |
-| 5/32          | **Taylor+ + Prune&Comp**    | **90.57** | **+24.72** |
-| 7/32          | CosSim(BI)                  | 61.54     | 100        |
-| 7/32          | **CosSim(BI) + Prune&Comp** | **87.64** | **+26.10** |
 
----
+### QA Results
 
-### MMLU Benchmark (LLaMA-3-8B, 5 Layers Pruned)
+(Note: $L_p$ denotes the number of pruned layers and $L_t$ denotes the total number of layers of the model. The Ratio column represents the proportion(%) of pruning parameters to the total parameters of the model. The Avg. column denotes the average accuracy(%) and the RP column denotes the retained performance(%).)
 
-| Metric     | Weighted Acc. | +Prune&Comp | Gain  |
-| ---------- | ------------- | ----------- | ----- |
-| Taylor+    | 38.64         | **48.42**   | +9.78 |
-| CosSim(BI) | 57.64         | **58.98**   | +1.34 |
+**Table 3：LLaMA-2-7B - Comparison on QA benchmark with training-free methods**
 
----
 
-### Ablation Study
+| $L_p/L_t$ | Method                  | Ratio  | ARC-c  | ARC-e  | BoolQ  | HeSw   | PIQA   | WG     | WSC    | Race-h | CoPa   | Avg.       | RP         |
+|-----------|-------------------------|--------|--------|--------|--------|--------|--------|--------|--------|--------|--------|------------|------------|
+| 0/32      | Dense                   | -      | 46.25  | 74.58  | 77.74  | 75.97  | 79.11  | 68.98  | 80.59  | 39.62  | 87.00  | 69.98      | 100        |
+| 7/32      | LLMPruner               | 20.56  | 35.24  | 60.61  | 62.42  | 61.66  | 75.41  | 54.78  | 71.43  | 31.67  | 80.00  | 59.25      | 83.80      |
+| 7/32      | SLEB                    | 21.02  | 33.02  | 56.57  | 63.91  | 62.49  | 73.07  | 58.96  | 69.23  | 32.06  | 84.00  | 59.26      | 83.66      |
+| 7/32      | ShortGPT                | 21.02  | 36.18  | 55.89  | 62.17  | 62.66  | 70.40  | 65.98  | 77.29  | 33.78  | 81.00  | 60.59      | 86.06      |
+| 7/32      | LLM-Streamline (None)   | 21.02  | 36.18  | 55.89  | 62.17  | 62.66  | 70.40  | 65.98  | 77.29  | 33.78  | 81.00  | 60.59      | 86.06      |
+| 7/32      | ShortGPT＋LinearPatch   | 20.78  | 37.63  | 61.24  | 62.14  | 63.49  | 70.46  | 65.90  | 79.49  | 36.46  | 85.00  | **62.42**  | **88.88**  |
 
-| Variant                                    | Avg. PPL ↓ |
-| ------------------------------------------ | ---------- |
-| Naive one-shot                             | 58.43      |
-| +Iterative Pruning                         | 38.37      |
-| +Magnitude Compensation                    | 37.39      |
-| **+Iterative + Compensation (Prune&Comp)** | **27.16**  |
+**Tabel 4：LLaMA-3-8B - Comparison on QA benchmark with training-free methods**
 
----
+| $L_p/L_t$ | Method                  | Ratio  | ARC-c  | ARC-e  | BoolQ  | HeSw   | PIQA   | WG     | WSC    | Race-h | CoPa   | Avg.       | RP         |
+|-----------|-------------------------|--------|--------|--------|--------|--------|--------|--------|--------|--------|--------|------------|------------|
+| 0/32      | Dense                   | -      | 53.41  | 77.78  | 81.28  | 79.16  | 80.85  | 72.85  | 86.45  | 40.19  | 89.00  | 73.44      | 100        |
+| 7/32      | LLMPruner               | 19.37  | 35.32  | 59.30  | 55.23  | 51.48  | 72.58  | 59.98  | 67.03  | 31.39  | 81.00  | 57.03      | 77.12      |
+| 7/32      | SLEB                    | 19.01  | 34.04  | 60.06  | 45.17  | 62.01  | 74.05  | 55.01  | 67.40  | 32.82  | 74.00  | 56.06      | 76.08      |
+| 7/32      | ShortGPT                | 19.01  | 42.41  | 56.65  | 65.26  | 64.70  | 70.89  | 71.19  | 73.63  | 34.16  | 75.00  | 61.54      | 83.79      |
+| 7/32      | LLM-Streamline (None)   | 19.01  | 28.92  | 39.56  | 38.07  | 33.26  | 59.47  | 55.56  | 59.71  | 24.02  | 60.00  | 44.29      | 59.99      |
+| 7/32      | ShortGPT＋LinearPatch    | 18.80  | 43.17  | 60.82  | 75.66  | 66.74  | 72.85  | 70.17  | 75.82  | 37.51  | 77.00  | **64.42**  | **87.82**  |
+| 7/32      | LLM-Streamline (None)＋LinearPatch   | 18.80  | 34.39  | 51.26  | 57.52  | 49.31  | 63.33  | 63.22  | 72.53  | 29.95  | 67.00  | 54.28      | 73.57      |
 
-## 📚 Citation
 
-If you find **Prune&Comp** useful, please cite our paper:
+## References
 
-```bibtex
-@article{chen2025prunecomp,
-  title={Prune\&Comp: Free Lunch for Layer-Pruned LLMs via Iterative Pruning with Magnitude Compensation},
-  author={Chen, Xinrui and Zhang, Hongxing and Zeng, Fanyi and Wei, Yongxian and Wang, Yizhi and Ling, Xitong and Li, Guanghao and Yuan, Chun},
-  journal={arXiv preprint arXiv:2507.18212},
+If you find LinearPatch helpful, please cite our paper:
+
+```
+
+@article{chen2025linearpatch,
+  title={LinearPatch: Plug-and-Play Patching for Layer-Pruned Large Language Models},
+  author={Chen, Xinrui and Bai, Haoli and Bai, and Liu, Ruikang and Zhao, Kang, and Yu, Xianzhi and Hou, Lu and Guan, Tian and He, Yonghong and and Yuan, Chun},
+  journal={arXiv preprint arXiv:2505.24680},
   year={2025}
 }
-```
 
+```
